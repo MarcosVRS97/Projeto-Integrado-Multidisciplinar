@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sistema de Atendimento - ISP</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .LOGO-container {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+    }
+    .LOGO {
+      height: 60px;
+      object-fit: contain;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .navbar {
+      background-color: #0066cc;
+      color: white;
+      padding: 15px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .ticket-form {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #0066cc;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #004a99;
+    }
+    .ticket-list {
+      margin-top: 20px;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    .ticket-card {
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+    }
+    .status-indicator {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 12px;
+      font-size: 0.8em;
+      margin-left: 10px;
+      color: #333;
+      font-weight: bold;
+    }
+    .status-open {
+      background-color: #ffd700;
+    }
+    .status-in-progress {
+      background-color: #87ceeb;
+    }
+    .status-resolved {
+      background-color: #90ee90;
+    }
+
+    /* CHATBOT CSS */
+    #chatbot {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 300px;
+      max-height: 400px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      border-radius: 8px;
+      background: white;
+      display: flex;
+      flex-direction: column;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+      font-size: 14px;
+      z-index: 1000;
+    }
+    #chatbot-header {
+      background-color: #0066cc;
+      color: white;
+      padding: 10px;
+      cursor: pointer;
+      user-select: none;
+      font-weight: bold;
+    }
+    #chatbot-messages {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+      background-color: #f9f9f9;
+    }
+    .chatbot-message {
+      margin-bottom: 10px;
+      clear: both;
+    }
+    .chatbot-message.bot {
+      background: #e1e1e1;
+      padding: 8px 12px;
+      border-radius: 12px 12px 12px 0;
+      max-width: 80%;
+      float: left;
+    }
+    .chatbot-message.user {
+      background: #0066cc;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 12px 12px 0 12px;
+      max-width: 80%;
+      float: right;
+    }
+    #chatbot-input-area {
+      display: flex;
+      border-top: 1px solid #ddd;
+    }
+    #chatbot-input {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      outline: none;
+      font-size: 14px;
+      border-radius: 0 0 0 8px;
+    }
+    #chatbot-send-btn {
+      background-color: #0066cc;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      cursor: pointer;
+      font-weight: bold;
+      border-radius: 0 0 8px 0;
+      transition: background-color 0.2s;
+    }
+    #chatbot-send-btn:hover {
+      background-color: #004a99;
+    }
+    #chatbot-minimized {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      background-color: #0066cc;
+      border-radius: 50%;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      cursor: pointer;
+      user-select: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      font-size: 22px;
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+  <div class="logo-container">
+    <img src="img/LOGO.png" alt="LOGO" class="LOGO" />
+  </div>
+
+  <div class="navbar">
+    <h1>Sistema de Atendimento</h1>
+    <div>
+      <button onclick="showNewTicketForm()">Novo Chamado</button>
+      <button onclick="showDashboard()">Painel</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div id="ticketForm" class="ticket-form">
+      <h2>Abrir Novo Chamado</h2>
+      <form id="newTicketForm" onsubmit="handleSubmit(event)">
+        <div class="form-group">
+          <label for="name">Nome:</label>
+          <input type="text" id="name" required />
+        </div>
+        <div class="form-group">
+          <label for="phone">Telefone:</label>
+          <input type="tel" id="phone" required pattern="[\d\s\-\+\(\)]+" title="Digite um telefone válido" />
+        </div>
+        <div class="form-group">
+          <label for="street">Rua:</label>
+          <input type="text" id="street" required />
+        </div>
+        <div class="form-group">
+          <label for="cep">CEP:</label>
+          <input type="text" id="cep" required pattern="\d{5}-?\d{3}" title="Digite um CEP válido (ex: 12345-678)" />
+        </div>
+        <div class="form-group">
+          <label for="title">Título da ocorrência:</label>
+          <input type="text" id="title" required />
+        </div>
+        <div class="form-group">
+          <label for="description">Descrição:</label>
+          <textarea id="description" rows="4" required></textarea>
+        </div>
+        <div class="form-group">
+          <label for="category">Categoria:</label>
+          <select id="category" required>
+            <option value="">Selecione...</option>
+            <option value="internet">Sem Internet</option>
+            <option value="modem">Problema no Modem</option>
+            <option value="fibra">Fibra Rompida</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="urgency">Urgência:</label>
+          <select id="urgency" required>
+            <option value="baixa">Baixa</option>
+            <option value="media">Média</option>
+            <option value="alta">Alta</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="attachments">Anexos:</label>
+          <input type="file" id="attachments" />
+        </div>
+        <button type="submit">Enviar Chamado</button>
+      </form>
+    </div>
+
+    <div id="dashboard" class="ticket-list" style="display: none;">
+      <h2>Meus Chamados</h2>
+      <div id="ticketList"></div>
+    </div>
+  </div>
+
+  <!-- CHATBOT -->
+  <div id="chatbot-minimized" title="Abrir Chatbot" onclick="toggleChatbot()">💬</div>
+
+  <div id="chatbot" style="display:none;">
+    <div id="chatbot-header" onclick="toggleChatbot()">Chatbot ✖</div>
+    <div id="chatbot-messages"></div>
+    <div id="chatbot-input-area">
+      <input type="text" id="chatbot-input" placeholder="Digite sua pergunta..." autocomplete="off" />
+      <button id="chatbot-send-btn">Enviar</button>
+    </div>
+  </div>
+
+  <script>
+    let tickets = JSON.parse(localStorage.getItem('tickets')) || [];
+
+    function generateProtocol() {
+      return 'PROT-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+    }
+
+    function handleSubmit(event) {
+      event.preventDefault();
+      const newTicket = {
+        protocol: generateProtocol(),
+        name: document.getElementById('name').value,
+        phone: document.getElementById('phone').value,
+        street: document.getElementById('street').value,
+        cep: document.getElementById('cep').value,
+        title: document.getElementById('title').value,
+        description: document.getElementById('description').value,
+        category: document.getElementById('category').value,
+        urgency: document.getElementById('urgency').value,
+        status: 'open',
+        date: new Date().toISOString()
+      };
+      tickets.push(newTicket);
+      localStorage.setItem('tickets', JSON.stringify(tickets));
+      alert(`Chamado aberto! Protocolo: ${newTicket.protocol}`);
+      event.target.reset();
+      showDashboard();
+    }
+
+    function deleteTicket(protocol) {
+      if (confirm('Deseja realmente excluir este chamado?')) {
+        tickets = tickets.filter(ticket => ticket.protocol !== protocol);
+        localStorage.setItem('tickets', JSON.stringify(tickets));
+        showDashboard();
+      }
+    }
+
+    function renderTickets() {
+      const ticketList = document.getElementById('ticketList');
+      ticketList.innerHTML = '';
+      tickets.forEach(ticket => {
+        const ticketElement = document.createElement('div');
+        ticketElement.className = 'ticket-card';
+        ticketElement.innerHTML = `
+          <h3>${ticket.title}
+            <span class="status-indicator status-${ticket.status}">
+              ${ticket.status.toUpperCase()}
+            </span>
+          </h3>
+          <p><strong>Nome:</strong> ${ticket.name}</p>
+          <p><strong>Telefone:</strong> ${ticket.phone}</p>
+          <p><strong>Rua:</strong> ${ticket.street}</p>
+          <p><strong>CEP:</strong> ${ticket.cep}</p>
+          <p>Protocolo: ${ticket.protocol}</p>
+          <p>Categoria: ${ticket.category}</p>
+          <p>Urgência: ${ticket.urgency}</p>
+          <p>Descrição: ${ticket.description}</p>
+          <button onclick="deleteTicket('${ticket.protocol}')">Excluir</button>
+        `;
+        ticketList.appendChild(ticketElement);
+      });
+    }
+
+    function showNewTicketForm() {
+      document.getElementById('ticketForm').style.display = 'block';
+      document.getElementById('dashboard').style.display = 'none';
+    }
+
+    function showDashboard() {
+      renderTickets();
+      document.getElementById('dashboard').style.display = 'block';
+      document.getElementById('ticketForm').style.display = 'none';
+    }
+
+    showNewTicketForm();
+
+    const chatbot = document.getElementById('chatbot');
+    const chatbotMinimized = document.getElementById('chatbot-minimized');
+    const chatbotMessages = document.getElementById('chatbot-messages');
+    const chatbotInput = document.getElementById('chatbot-input');
+    const chatbotSendBtn = document.getElementById('chatbot-send-btn');
+
+    function toggleChatbot() {
+      if (chatbot.style.display === 'none' || chatbot.style.display === '') {
+        chatbot.style.display = 'flex';
+        chatbotMinimized.style.display = 'none';
+        chatbotInput.focus();
+        addBotMessage("Olá! Eu sou o assistente virtual. Como posso ajudar? Você pode perguntar sobre como abrir chamado, categorias, preenchimento de dados e mais.");
+      } else {
+        chatbot.style.display = 'none';
+        chatbotMinimized.style.display = 'flex';
+      }
+    }
+
+    function addMessage(text, sender = 'bot') {
+      const msgDiv = document.createElement('div');
+      msgDiv.classList.add('chatbot-message', sender);
+      msgDiv.textContent = text;
+      chatbotMessages.appendChild(msgDiv);
+      chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+    }
+
+    function addBotMessage(text) {
+      addMessage(text, 'bot');
+    }
+
+    function addUserMessage(text) {
+      addMessage(text, 'user');
+    }
+
+    function processUserInput(input) {
+      const text = input.trim().toLowerCase();
+
+      if (text.includes('como abrir chamado') || text.includes('abrir chamado')) {
+        addBotMessage("Para abrir um chamado, preencha o formulário com seus dados pessoais (nome, telefone, rua, CEP), título, descrição do problema, categoria e urgência. Depois clique em Enviar.");
+      } else if (text.includes('categorias')) {
+        addBotMessage("As categorias disponíveis são: Sem Internet, Problema no Modem e Fibra Rompida.");
+      } else if (text.includes('telefone')) {
+        addBotMessage("No campo telefone, digite seu número com DDD, por exemplo: (11) 99999-9999.");
+      } else if (text.includes('cep')) {
+        addBotMessage("O CEP deve ser informado no formato 12345-678.");
+      } else if (text.includes('urgência')) {
+        addBotMessage("Você pode escolher a urgência do chamado entre Baixa, Média e Alta.");
+      } else {
+        addBotMessage("Desculpe, não entendi. Por favor, reformule sua pergunta.");
+      }
+    }
+
+    chatbotSendBtn.addEventListener('click', () => {
+      const text = chatbotInput.value.trim();
+      if (!text) return;
+      addUserMessage(text);
+      chatbotInput.value = '';
+      processUserInput(text);
+    });
+
+    chatbotInput.addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') {
+        chatbotSendBtn.click();
+      }
+    });
+  </script>
+</body>
+</html>
